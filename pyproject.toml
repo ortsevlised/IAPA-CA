@@ -1,0 +1,7 @@
+[project]
+name = "po-triage-v2"
+version = "0.1.0"
+description = "Phase 1 intelligent PO triage proof-of-concept"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
