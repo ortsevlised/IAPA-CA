@@ -47,83 +47,50 @@ def run_classification_and_duplicate_step(payload: Mapping[str, Any]) -> dict[st
     }
 
 
-def run_phase1_step3(payload: Mapping[str, Any]) -> dict[str, Any]:
+def run_phase1_step6(payload: Mapping[str, Any]) -> dict[str, Any]:
     step2_output = run_classification_and_duplicate_step(payload)
+
     if step2_output["halted"]:
-        return {
+        step5_output = {
             **step2_output,
-            "stage": "classify_duplicate_extract",
+            "stage": "classify_duplicate_extract_validate_score",
             "extraction": None,
+            "validation": None,
+            "manual_fallback": False,
+            "priority": None,
+            "priority_skipped_reason": "duplicate_po",
         }
+        return emit_downstream_json(step5_output=step5_output, payload=payload)
 
     if should_use_template_path(payload):
         extraction = extract_with_template(payload).to_dict()
     else:
         extraction = extract_with_ai_ocr_stub(payload).to_dict()
 
-    return {
-        **step2_output,
-        "stage": "classify_duplicate_extract",
-        "extraction": extraction,
-    }
-
-
-def run_phase1_step4(payload: Mapping[str, Any]) -> dict[str, Any]:
-    step3_output = run_phase1_step3(payload)
-
-    if step3_output["halted"]:
-        return {
-            **step3_output,
-            "stage": "classify_duplicate_extract_validate",
-            "validation": None,
-            "manual_fallback": False,
-        }
-
     threshold = float(payload.get("validation_threshold", DEFAULT_AI_CONFIDENCE_THRESHOLD))
-    validation = validate_extraction(step3_output["extraction"], threshold=threshold).to_dict()
+    validation = validate_extraction(extraction, threshold=threshold).to_dict()
+    manual_fallback = validation["requires_manual_fallback"]
 
-    return {
-        **step3_output,
-        "stage": "classify_duplicate_extract_validate",
-        "validation": validation,
-        "manual_fallback": validation["requires_manual_fallback"],
-    }
-
-
-def run_phase1_step5(payload: Mapping[str, Any]) -> dict[str, Any]:
-    step4_output = run_phase1_step4(payload)
-
-    if step4_output["halted"]:
-        return {
-            **step4_output,
-            "stage": "classify_duplicate_extract_validate_score",
-            "priority": None,
-            "priority_skipped_reason": "duplicate_po",
+    if manual_fallback:
+        priority = None
+        priority_skipped_reason = "manual_fallback_required"
+    else:
+        extracted_fields = extraction["extracted_fields"]
+        context = {
+            "is_expedited": payload.get("is_expedited", payload.get("isExpedited", False)),
+            "is_month_end": payload.get("is_month_end", payload.get("isMonthEnd", payload.get("is_period_end", False))),
         }
+        priority = score_priority(extracted_fields, context=context).to_dict()
+        priority_skipped_reason = None
 
-    if step4_output["manual_fallback"]:
-        return {
-            **step4_output,
-            "stage": "classify_duplicate_extract_validate_score",
-            "priority": None,
-            "priority_skipped_reason": "manual_fallback_required",
-        }
-
-    extracted_fields = step4_output["extraction"]["extracted_fields"]
-    context = {
-        "is_expedited": payload.get("is_expedited", payload.get("isExpedited", False)),
-        "is_month_end": payload.get("is_month_end", payload.get("isMonthEnd", payload.get("is_period_end", False))),
-    }
-    priority = score_priority(extracted_fields, context=context).to_dict()
-
-    return {
-        **step4_output,
+    step5_output = {
+        **step2_output,
         "stage": "classify_duplicate_extract_validate_score",
+        "extraction": extraction,
+        "validation": validation,
+        "manual_fallback": manual_fallback,
         "priority": priority,
-        "priority_skipped_reason": None,
+        "priority_skipped_reason": priority_skipped_reason,
     }
 
-
-def run_phase1_step6(payload: Mapping[str, Any]) -> dict[str, Any]:
-    step5_output = run_phase1_step5(payload)
     return emit_downstream_json(step5_output=step5_output, payload=payload)
