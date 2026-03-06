@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from src.pipeline import run_phase1_step3
+from src.pipeline import run_phase1_step6
 
 
 def _load_payload(input_path: str | None) -> dict[str, Any]:
@@ -25,7 +25,7 @@ def main() -> None:
     args = parser.parse_args()
 
     payload = _load_payload(args.input)
-    output = run_phase1_step3(payload)
+    output = run_phase1_step6(payload)
 
     print(json.dumps(output, indent=2))
 
