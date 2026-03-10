@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PO Triage Upload</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <p class="eyebrow">Phase 1</p>
+      <h1>PO Triage Upload Console</h1>
+      <p class="subhead">Upload a PO document, set triage parameters, and return downstream-ready JSON.</p>
+    </section>
+    <ol id="stepper" class="stepper">
+      <li class="step is-active" data-step="1"><span>1</span> Upload Document</li>
+      <li class="step" data-step="2"><span>2</span> Review Processing</li>
+      <li class="step" data-step="3"><span>3</span> Confirm Routing</li>
+    </ol>
+
+    <section class="panel-grid">
+      <article class="panel input-panel">
+        <header>
+          <h2>Stage 1: Upload</h2>
+        </header>
+        <form id="triageForm">
+          <label class="field">
+            <span>PO Document</span>
+            <input id="fileInput" type="file" required />
+          </label>
+          <p id="fileMeta" class="meta">No file selected.</p>
+
+          <div class="actions">
+            <button id="runBtn" class="primary" type="submit">Upload + Run</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="panel output-panel">
+        <header>
+          <h2>Stages 2-3: Triage Outcome</h2>
+          <span id="statusPill" class="pill">Idle</span>
+        </header>
+        <section class="journey">
+          <h3>Final Decision</h3>
+          <div id="decisionCard" class="decision-card">Upload a document to start triage.</div>
+        </section>
+        <div id="summary" class="summary"></div>
+        <section class="journey">
+          <h3>Extracted Fields</h3>
+          <div id="fieldsPanel" class="fields-panel"></div>
+        </section>
+        <section class="journey">
+          <h3>Processing Stages</h3>
+          <div id="stages" class="stages"></div>
+        </section>
+        <details>
+          <summary>Raw JSON (Technical View)</summary>
+          <pre id="outputJson"></pre>
+        </details>
+      </article>
+
+      <article class="panel payload-panel">
+        <header>
+          <h2>Request Sent</h2>
+        </header>
+        <pre id="requestJson"></pre>
+      </article>
+
+      <article class="panel help-panel">
+        <header><h2>How It Works</h2></header>
+        <div class="help">
+          <p>1. Upload a PO file (PDF, image, text, email, etc.).</p>
+          <p>2. Click <strong>Upload + Run</strong> to execute the full Phase 1 pipeline.</p>
+          <p>3. Review extracted fields, stage decisions, and final route.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
